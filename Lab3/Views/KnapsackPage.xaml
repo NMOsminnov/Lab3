@@ -1,0 +1,225 @@
+<Page
+    x:Class="Lab3.Views.KnapsackPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"   
+    xmlns:vm="using:Lab3.ViewModels">
+
+    <ScrollViewer Padding="20">
+        <StackPanel Spacing="15" MaxWidth="800">
+            <TextBlock Text="Шифрование рюкзаком" Style="{StaticResource SubheaderTextBlockStyle}" />
+
+            <!-- Параметры генерации ключей -->
+            <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <StackPanel>
+                        <TextBlock Text="Длина последовательности:" />
+                        <NumberBox Value="{x:Bind ViewModel.SequenceLength, Mode=TwoWay}" 
+                              Minimum="1" Maximum="200" SpinButtonPlacementMode="Inline" Width="150" />
+                    </StackPanel>
+                </StackPanel>
+                <Button Content="Сгенерировать ключи" 
+                    Command="{x:Bind ViewModel.GenerateKeysCommand}" 
+                    HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <!-- Отображение ключей -->
+            <StackPanel Spacing="5">
+                <TextBox Header="Сверхвозрастающая последовательность (закрытый ключ)" 
+                    Text="{x:Bind ViewModel.SuperincreasingSequence, Mode=OneWay}" 
+                    IsReadOnly="True" TextWrapping="Wrap" />
+                <TextBox Header="Открытый ключ" 
+                    Text="{x:Bind ViewModel.PublicKey, Mode=OneWay}" 
+                    IsReadOnly="True" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- Обмен ключами -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="Управление ключами" Style="{StaticResource BaseTextBlockStyle}" FontWeight="SemiBold" Margin="0,10,0,5"/>
+
+                <!-- Публичный ключ -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Экспорт публичного ключа" 
+                Command="{x:Bind ViewModel.ExportPublicKeyCommand}" />
+                    <Button Content="Импорт публичного ключа" 
+                Command="{x:Bind ViewModel.ImportPublicKeyCommand}" />
+                </StackPanel>
+
+                <!-- Приватный ключ -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Экспорт приватного ключа" 
+                Command="{x:Bind ViewModel.ExportPrivateKeyCommand}" />
+                    <Button Content="Импорт приватного ключа" 
+                Command="{x:Bind ViewModel.ImportPrivateKeyCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Ввод и шифрование -->
+            <StackPanel Spacing="5">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Загрузить текст из файла" 
+                        Command="{x:Bind ViewModel.LoadFromFileCommand}" />
+                    <Button Content="Сохранить зашифрованный текст" 
+                        Command="{x:Bind ViewModel.SaveEncryptedTextCommand}" />
+                    <Button Content="Загрузить зашифрованный текст" 
+                        Command="{x:Bind ViewModel.LoadEncryptedTextCommand}" />
+                </StackPanel>
+                <TextBox Header="Текст для шифрования" 
+                    Text="{x:Bind ViewModel.InputText, Mode=TwoWay}"
+                    AcceptsReturn="True" TextWrapping="Wrap" Height="80" />
+                <Button Content="Зашифровать" 
+                    Command="{x:Bind ViewModel.EncryptCommand}" 
+                    HorizontalAlignment="Left" />
+                <TextBox Header="Зашифрованный текст" 
+                    Text="{x:Bind ViewModel.EncryptedText, Mode=OneWay}" 
+                    IsReadOnly="True" Height="100" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- Расшифровка -->
+            <StackPanel Spacing="5">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Расшифровать" 
+                        Command="{x:Bind ViewModel.DecryptCommand}" 
+                        HorizontalAlignment="Left" />
+                    <Button Content="Сохранить расшифрованный текст" 
+                        Command="{x:Bind ViewModel.SaveDecryptedTextCommand}" />
+                </StackPanel>
+                <TextBox Header="Расшифрованный текст" 
+                    Text="{x:Bind ViewModel.DecryptedText, Mode=OneWay}" 
+                    IsReadOnly="True" Height="80" TextWrapping="Wrap" />
+            </StackPanel>
+
+
+            <!-- Частотный анализ -->
+            <StackPanel Spacing="10" Background="{ThemeResource CardBackgroundFillColorDefault}" 
+            Padding="15" CornerRadius="8" BorderBrush="{ThemeResource CardStrokeColorDefault}" BorderThickness="1">
+
+                <TextBlock Text="Частотный анализ зашифрованного текста" 
+               Style="{StaticResource BaseTextBlockStyle}" FontWeight="SemiBold"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Выполнить анализ" Command="{x:Bind ViewModel.AnalyzeFrequencyCommand}" 
+                HorizontalAlignment="Left"/>
+                    <TextBlock Text="(показывает распределение зашифрованных блоков)" 
+                   Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" Opacity="0.7"/>
+                </StackPanel>
+
+                <!-- Панель результатов -->
+                <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.FrequencyPanelVisibility, Mode=OneWay}">
+
+                    <!-- Статистика -->
+                    <StackPanel Orientation="Horizontal" Spacing="20">
+                        <StackPanel>
+                            <TextBlock Text="Всего блоков:" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock Text="{x:Bind ViewModel.FrequencyStats.TotalBlocks, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Уникальных:" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock Text="{x:Bind ViewModel.FrequencyStats.UniqueBlocks, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Макс. частота:" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock Text="{x:Bind ViewModel.FrequencyStats.MaxFrequency, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Энтропия (оценка):" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <!-- ✅ Используем готовое свойство без StringFormat -->
+                            <TextBlock Text="{x:Bind ViewModel.FrequencyStats.EntropyFormatted, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Таблица -->
+                    <TextBlock Text="Топ-100 самых частых блоков:" Style="{StaticResource BodyTextBlockStyle}" Margin="0,5,0,0"/>
+                    <ScrollViewer Height="250" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <!-- ✅ Правильный namespace: controls="using:CommunityToolkit.WinUI.Controls" -->
+                        <controls:DataGrid ItemsSource="{x:Bind ViewModel.FrequencyTable, Mode=OneWay}"
+                               AutoGenerateColumns="False"
+                               CanUserSortColumns="True"
+                               GridLinesVisibility="Horizontal"
+                               IsReadOnly="True">
+                            <controls:DataGrid.Columns>
+                                <controls:DataGridTextColumn Header="№" Binding="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=Index}" Width="40"/>
+                                <controls:DataGridTextColumn Header="Значение блока" Binding="{Binding ShortValue}" Width="200"/>
+                                <controls:DataGridTextColumn Header="Частота" Binding="{Binding Count}" Width="80"/>
+                                <!-- ✅ Используем готовое свойство без StringFormat -->
+                                <controls:DataGridTextColumn Header="Процент" Binding="{Binding PercentageFormatted}" Width="100"/>
+                            </controls:DataGrid.Columns>
+                        </controls:DataGrid>
+                    </ScrollViewer>
+
+                    <!-- Простая визуализация -->
+                    <TextBlock Text="График частот (топ-50 блоков):" Style="{StaticResource BodyTextBlockStyle}" Margin="0,10,0,5"/>
+
+                    <Border Background="{ThemeResource CardBackgroundFillColorSecondary}" 
+        CornerRadius="4" Padding="10" Height="250">
+
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Bottom" Height="220">
+
+                                <!-- Ось Y: метки (опционально, можно убрать для простоты) -->
+                                <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Spacing="40" Width="30">
+                                    <TextBlock Text="100%" HorizontalAlignment="Right" FontSize="9" Opacity="0.7"/>
+                                    <TextBlock Text="50%" HorizontalAlignment="Right" FontSize="9" Opacity="0.7"/>
+                                    <TextBlock Text="0" HorizontalAlignment="Right" FontSize="9" Opacity="0.7"/>
+                                </StackPanel>
+
+                                <!-- Столбцы -->
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.FrequencyTable, Mode=OneWay}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Width="30" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                                <!-- Столбец -->
+                                                <Rectangle Fill="{ThemeResource SystemAccentColor}" 
+                                       Height="{Binding BarHeight}" 
+                                       Width="20" 
+                                       RadiusX="2" RadiusY="2"
+                                       ToolTipService.ToolTip="{Binding BlockValue}">
+                                                    <Rectangle.RenderTransform>
+                                                        <TranslateTransform Y="0"/>
+                                                    </Rectangle.RenderTransform>
+                                                </Rectangle>
+
+                                                <!-- Подпись: частота -->
+                                                <TextBlock Text="{Binding Count}" 
+                                       HorizontalAlignment="Center" 
+                                       FontSize="9" 
+                                       Margin="0,2,0,0"
+                                       Foreground="{ThemeResource TextFillColorSecondary}"/>
+
+                                                <!-- Подпись: значение блока (повёрнуто) -->
+                                                <TextBlock Text="{Binding ShortValue}" 
+                                       HorizontalAlignment="Center" 
+                                       FontSize="8" 
+                                       FontFamily="Consolas"
+                                       RenderTransformOrigin="0.5,0.5"
+                                       Foreground="{ThemeResource TextFillColorTertiary}">
+                                                    <TextBlock.RenderTransform>
+                                                        <RotateTransform Angle="-45"/>
+                                                    </TextBlock.RenderTransform>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Button Content="Скрыть результаты" Command="{x:Bind ViewModel.CloseFrequencyPanelCommand}" 
+                HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+
+            <!-- Статус -->
+            <InfoBar Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" 
+                IsOpen="{x:Bind ViewModel.StatusMessage, Converter={StaticResource NotEmptyToBoolConverter}}" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
