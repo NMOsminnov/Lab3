@@ -1,0 +1,46 @@
+<Page
+    x:Class="Lab3.Views.LogsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Lab3.ViewModels">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель управления -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+            <TextBlock Text="Журнал событий" Style="{StaticResource SubheaderTextBlockStyle}"/>
+            <Button Content="Обновить" Command="{x:Bind ViewModel.RefreshCommand}" Width="100"/>
+            <Button Content="Очистить" Command="{x:Bind ViewModel.ClearCommand}" Width="100"/>
+            <Button Content="Копировать всё" Command="{x:Bind ViewModel.CopyAllCommand}" Width="130"/>
+            <ToggleSwitch Header="Автопрокрутка" IsOn="{x:Bind ViewModel.AutoScroll, Mode=TwoWay}" Width="160"/>
+        </StackPanel>
+
+        <!--  TextBox вместо ListView: нативно поддерживает выделение нескольких строк и Ctrl+C -->
+        <TextBox Grid.Row="1"
+                 x:Name="LogBox"
+                 Text="{x:Bind ViewModel.LogsText, Mode=OneWay}"
+                 FontFamily="Consolas"
+                 FontSize="11"
+                 TextWrapping="Wrap"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 Background="{ThemeResource CardBackgroundFillColorDefault}"
+                 BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                 BorderThickness="1"
+                 CornerRadius="4"
+                 Padding="8"/>
+
+        <!-- Статус -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
+            <TextBlock Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
+            <TextBlock Text="{x:Bind ViewModel.LogCountText, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"/>
+        </StackPanel>
+    </Grid>
+</Page>

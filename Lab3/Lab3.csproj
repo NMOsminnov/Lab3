@@ -14,7 +14,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Views\KnapsackPage.xaml" />
+    <None Remove="Views\LogPage.xaml" />
     <None Remove="Views\RsaPage.xaml" />
+    <None Remove="Views\SteganalysisPage.xaml" />
     <None Remove="Views\StegoPage.xaml" />
   </ItemGroup>
 
@@ -49,6 +51,16 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\SteganalysisPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\LogPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\RsaPage.xaml">

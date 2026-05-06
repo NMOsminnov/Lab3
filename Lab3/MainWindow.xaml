@@ -12,6 +12,8 @@
                 <NavigationViewItem Content="Стеганография" Tag="Stego" />
                 <NavigationViewItem Content="Шифрование рюкзаком" Tag="Knapsack"/>
                 <NavigationViewItem Content="RSA" Tag="RSA"/>
+                <NavigationViewItem Content="Отладка" Tag="Logs"/>
+                <NavigationViewItem Content="Стегоанализ" Tag="StegoAnalysis"/>
             </NavigationView.MenuItems>
 
             <Frame x:Name="ContentFrame" />

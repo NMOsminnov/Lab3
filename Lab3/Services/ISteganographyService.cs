@@ -1,12 +1,16 @@
-﻿using Lab3.Models;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Windows.Storage.Streams;
+using Lab3.Models;
 
 namespace Lab3.Services;
 
 public interface ISteganographyService
 {
-    Task<CryptoResult> EmbedTextAsync(string imagePath, string text, int bitsPerChannel);
-    Task<CryptoResult> ExtractTextAsync(string imagePath, int bitsPerChannel, int expectedLength = -1);
+    // 🔥 Новая сигнатура с настройками
+    Task<CryptoResult> EmbedTextAsync(string imagePath, string text, StegoSettings settings);
+
+    // 🔥 Новая сигнатура с настройками
+    Task<CryptoResult> ExtractTextAsync(string imagePath, StegoSettings settings);
+
     Task<bool> SaveImageAsync(IRandomAccessStream imageStream, string savePath);
 }

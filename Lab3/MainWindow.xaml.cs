@@ -61,12 +61,16 @@ public sealed partial class MainWindow : Window
         collection.AddSingleton<ISteganographyService, SteganographyService>();
         collection.AddSingleton<IKnapsackService, KnapsackService>();
         collection.AddSingleton<IRsaService, RsaService>();
+        collection.AddSingleton<ILogService, LogService>();
+        collection.AddSingleton<SteganalysisService>();
 
 
         // ViewModels
         collection.AddTransient<StegoViewModel>();
         collection.AddTransient<KnapsackViewModel>();
         collection.AddTransient<RsaViewModel>();
+        collection.AddTransient<LogsViewModel>();
+        collection.AddTransient<SteganalysisViewModel>();
 
         return collection.BuildServiceProvider();
     }
@@ -81,6 +85,8 @@ public sealed partial class MainWindow : Window
             "Stego" => Services.GetRequiredService<StegoViewModel>(),
             "Knapsack" => Services.GetRequiredService<KnapsackViewModel>(),
             "RSA" => Services.GetRequiredService<RsaViewModel>(),
+            "Logs" => Services.GetRequiredService<LogsViewModel>(),
+            "StegoAnalysis" => Services.GetRequiredService<SteganalysisViewModel>(),
             _ => null
         };
 
@@ -90,6 +96,8 @@ public sealed partial class MainWindow : Window
             "Stego" => typeof(StegoPage),
             "Knapsack" => typeof(KnapsackPage),
             "RSA" => typeof(RsaPage),
+            "Logs" => typeof(LogsPage),
+            "StegoAnalysis" => typeof(SteganalysisPage),
             _ => typeof(StegoPage)
         };
 

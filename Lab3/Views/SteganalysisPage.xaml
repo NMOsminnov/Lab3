@@ -1,0 +1,266 @@
+<Page
+    x:Class="Lab3.Views.SteganalysisPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Lab3.Models"
+    xmlns:vm="using:Lab3.ViewModels">
+
+    <ScrollViewer Padding="20">
+        <StackPanel Spacing="20" MaxWidth="1200">
+            <TextBlock Text="Стегоанализ" Style="{StaticResource SubheaderTextBlockStyle}" />
+
+            <!-- Выбор изображений -->
+            <StackPanel Spacing="10" Background="{ThemeResource CardBackgroundFillColorSecondary}" 
+                        Padding="15" CornerRadius="8">
+                <TextBlock Text="Исходные изображения" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Изображение 1" Command="{x:Bind ViewModel.SelectImage1Command}" Width="150"/>
+                    <TextBlock Text="{x:Bind ViewModel.ImagePath1, Mode=OneWay}" VerticalAlignment="Center" 
+                               TextWrapping="Wrap" MaxWidth="500" Opacity="0.8"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Изображение 2" Command="{x:Bind ViewModel.SelectImage2Command}" Width="150"/>
+                    <TextBlock Text="{x:Bind ViewModel.ImagePath2, Mode=OneWay}" VerticalAlignment="Center" 
+                               TextWrapping="Wrap" MaxWidth="500" Opacity="0.8"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Параметры -->
+            <StackPanel Orientation="Horizontal" Spacing="20" Background="{ThemeResource CardBackgroundFillColorSecondary}" 
+                        Padding="15" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Порог:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <NumberBox Value="{x:Bind ViewModel.Threshold, Mode=TwoWay}" 
+                              Minimum="1" Maximum="1000" SpinButtonPlacementMode="Inline" Width="200"/>
+                </StackPanel>
+                
+                <Button Content="Запустить исследование" Command="{x:Bind ViewModel.RunAnalysisCommand}" 
+                        IsEnabled="{x:Bind ViewModel.IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                        Style="{StaticResource AccentButtonStyle}" Width="200"/>
+                
+                <Button Content="Анализ одного" Command="{x:Bind ViewModel.AnalyzeSingleCommand}" 
+                        IsEnabled="{x:Bind ViewModel.IsBusy, Converter={StaticResource InverseBoolConverter}}" Width="150"/>
+                
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" Width="32" Height="32"/>
+            </StackPanel>
+
+            <!-- Таблица результатов -->
+            <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.LastResults.Count, Converter={StaticResource ZeroToVisibilityConverter}, Mode=OneWay}">
+                <TextBlock Text="Результаты:" FontWeight="SemiBold" FontSize="16"/>
+                <ListView ItemsSource="{x:Bind ViewModel.LastResults, Mode=OneWay}" 
+                          BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                          CornerRadius="4" Height="150">
+                    <ListView.Header>
+                        <Grid Padding="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Бит" FontWeight="Bold" Grid.Column="0"/>
+                            <TextBlock Text="Chi2" FontWeight="Bold" Grid.Column="1"/>
+                            <TextBlock Text="P-value" FontWeight="Bold" Grid.Column="2"/>
+                            <TextBlock Text="Статус" FontWeight="Bold" Grid.Column="3"/>
+                            <TextBlock Text="Notes" FontWeight="Bold" Grid.Column="4"/>
+                        </Grid>
+                    </ListView.Header>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:SteganalysisResult">
+                            <Grid Padding="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Bind BitsPerChannel}" Grid.Column="0"/>
+                                <TextBlock Text="{x:Bind ChiSquare}" Grid.Column="1"/>
+                                <TextBlock Text="{x:Bind PValue}" Grid.Column="2"/>
+                                <TextBlock Text="{x:Bind IsDetected}" Grid.Column="3" 
+                                          Foreground="{x:Bind IsDetected, Converter={StaticResource BoolToColorConverter}}"/>
+                                <TextBlock Text="{x:Bind Notes}" Grid.Column="4" Opacity="0.8"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+
+                       <!-- График 1 бит -->
+            <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.ChartData1Bit.Count, Converter={StaticResource ZeroToVisibilityConverter}, Mode=OneWay}">
+                <TextBlock Text="1 бит на канал" FontWeight="SemiBold" FontSize="14"/>
+                
+                <Grid Height="250">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/> <!-- Ось Y -->
+                        <ColumnDefinition Width="*"/>   <!-- Область графика -->
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Ось Y -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Spacing="42" Margin="0,0,5,0">
+                        <TextBlock Text="100" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="80" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="60" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="40" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="20" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                    </StackPanel>
+                    
+                    <!-- Область столбцов -->
+                    <Border Grid.Column="1" BorderThickness="0,0,1,1" BorderBrush="{ThemeResource TextFillColorSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Столбец 20% -->
+                            <Rectangle Grid.Column="0" Fill="{ThemeResource SystemAccentColor}" 
+                                       Width="40" Height="{Binding ChartData1Bit[0].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                       ToolTipService.ToolTip="20%: {Binding ChartData1Bit[0].DetectionRate}%"/>
+                            
+                            <!-- Столбец 40% -->
+                            <Rectangle Grid.Column="1" Fill="{ThemeResource SystemAccentColor}" 
+                                       Width="40" Height="{Binding ChartData1Bit[1].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                       ToolTipService.ToolTip="40%: {Binding ChartData1Bit[1].DetectionRate}%"/>
+                            
+                            <!-- Столбец 60% -->
+                            <Rectangle Grid.Column="2" Fill="{ThemeResource SystemAccentColor}" 
+                                       Width="40" Height="{Binding ChartData1Bit[2].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                       ToolTipService.ToolTip="60%: {Binding ChartData1Bit[2].DetectionRate}%"/>
+                            
+                            <!-- Столбец 80% -->
+                            <Rectangle Grid.Column="3" Fill="{ThemeResource SystemAccentColor}" 
+                                       Width="40" Height="{Binding ChartData1Bit[3].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                       ToolTipService.ToolTip="80%: {Binding ChartData1Bit[3].DetectionRate}%"/>
+                            
+                            <!-- Столбец 100% -->
+                            <Rectangle Grid.Column="4" Fill="{ThemeResource SystemAccentColor}" 
+                                       Width="40" Height="{Binding ChartData1Bit[4].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                                       ToolTipService.ToolTip="100%: {Binding ChartData1Bit[4].DetectionRate}%"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+                
+                <!-- Ось X -->
+                <Grid Margin="55,5,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="20" Grid.Column="0" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="40" Grid.Column="1" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="60" Grid.Column="2" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="80" Grid.Column="3" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="100" Grid.Column="4" HorizontalAlignment="Center" FontSize="10"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- График 2 бит -->
+            <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.ChartData2Bit.Count, Converter={StaticResource ZeroToVisibilityConverter}, Mode=OneWay}">
+                <TextBlock Text="2 бита на канал" FontWeight="SemiBold" FontSize="14"/>
+                <Grid Height="250">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/><ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Spacing="42" Margin="0,0,5,0">
+                        <TextBlock Text="100" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="80" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="60" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="40" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="20" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" BorderThickness="0,0,1,1" BorderBrush="{ThemeResource TextFillColorSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle Grid.Column="0" Fill="#FF8C00" Width="40" Height="{Binding ChartData2Bit[0].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="1" Fill="#FF8C00" Width="40" Height="{Binding ChartData2Bit[1].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="2" Fill="#FF8C00" Width="40" Height="{Binding ChartData2Bit[2].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="3" Fill="#FF8C00" Width="40" Height="{Binding ChartData2Bit[3].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="4" Fill="#FF8C00" Width="40" Height="{Binding ChartData2Bit[4].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+                <Grid Margin="55,5,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="20" Grid.Column="0" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="40" Grid.Column="1" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="60" Grid.Column="2" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="80" Grid.Column="3" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="100" Grid.Column="4" HorizontalAlignment="Center" FontSize="10"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- График 3 бит -->
+            <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.ChartData3Bit.Count, Converter={StaticResource ZeroToVisibilityConverter}, Mode=OneWay}">
+                <TextBlock Text="3 бита на канал" FontWeight="SemiBold" FontSize="14"/>
+                <Grid Height="250">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/><ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Spacing="42" Margin="0,0,5,0">
+                        <TextBlock Text="100" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="80" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="60" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="40" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="20" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" BorderThickness="0,0,1,1" BorderBrush="{ThemeResource TextFillColorSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle Grid.Column="0" Fill="#228B22" Width="40" Height="{Binding ChartData3Bit[0].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="1" Fill="#228B22" Width="40" Height="{Binding ChartData3Bit[1].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="2" Fill="#228B22" Width="40" Height="{Binding ChartData3Bit[2].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="3" Fill="#228B22" Width="40" Height="{Binding ChartData3Bit[3].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="4" Fill="#228B22" Width="40" Height="{Binding ChartData3Bit[4].DetectionRate, Converter={StaticResource PercentToHeightConverter}}" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+                <Grid Margin="55,5,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="20" Grid.Column="0" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="40" Grid.Column="1" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="60" Grid.Column="2" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="80" Grid.Column="3" HorizontalAlignment="Center" FontSize="10"/>
+                    <TextBlock Text="100" Grid.Column="4" HorizontalAlignment="Center" FontSize="10"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Статус -->
+            <InfoBar Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" 
+                    IsOpen="{x:Bind ViewModel.StatusMessage, Converter={StaticResource NotEmptyToBoolConverter}}" 
+                    IsClosable="True"/>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
