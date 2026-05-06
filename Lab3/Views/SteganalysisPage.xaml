@@ -33,7 +33,7 @@
                 <StackPanel>
                     <TextBlock Text="Порог:" FontWeight="SemiBold" Margin="0,0,0,5"/>
                     <NumberBox Value="{x:Bind ViewModel.Threshold, Mode=TwoWay}" 
-                              Minimum="1" Maximum="1000" SpinButtonPlacementMode="Inline" Width="200"/>
+                              Minimum="1" Maximum="1000" SpinButtonPlacementMode="Inline" Width="120"/>
                 </StackPanel>
                 
                 <Button Content="Запустить исследование" Command="{x:Bind ViewModel.RunAnalysisCommand}" 
@@ -90,14 +90,13 @@
                 </ListView>
             </StackPanel>
 
-                       <!-- График 1 бит -->
+            <!-- График 1 бит -->
             <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.ChartData1Bit.Count, Converter={StaticResource ZeroToVisibilityConverter}, Mode=OneWay}">
                 <TextBlock Text="1 бит на канал" FontWeight="SemiBold" FontSize="14"/>
-                
                 <Grid Height="250">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50"/> <!-- Ось Y -->
-                        <ColumnDefinition Width="*"/>   <!-- Область графика -->
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Ось Y -->
@@ -110,50 +109,33 @@
                         <TextBlock Text="0" HorizontalAlignment="Right" FontSize="10" Opacity="0.7"/>
                     </StackPanel>
                     
-                    <!-- Область столбцов -->
+                    <!-- Столбцы (фиксированные позиции) -->
                     <Border Grid.Column="1" BorderThickness="0,0,1,1" BorderBrush="{ThemeResource TextFillColorSecondary}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             
-                            <!-- Столбец 20% -->
-                            <Rectangle Grid.Column="0" Fill="{ThemeResource SystemAccentColor}" 
-                                       Width="40" Height="{Binding ChartData1Bit[0].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
-                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                       ToolTipService.ToolTip="20%: {Binding ChartData1Bit[0].DetectionRate}%"/>
-                            
-                            <!-- Столбец 40% -->
-                            <Rectangle Grid.Column="1" Fill="{ThemeResource SystemAccentColor}" 
-                                       Width="40" Height="{Binding ChartData1Bit[1].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
-                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                       ToolTipService.ToolTip="40%: {Binding ChartData1Bit[1].DetectionRate}%"/>
-                            
-                            <!-- Столбец 60% -->
-                            <Rectangle Grid.Column="2" Fill="{ThemeResource SystemAccentColor}" 
-                                       Width="40" Height="{Binding ChartData1Bit[2].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
-                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                       ToolTipService.ToolTip="60%: {Binding ChartData1Bit[2].DetectionRate}%"/>
-                            
-                            <!-- Столбец 80% -->
-                            <Rectangle Grid.Column="3" Fill="{ThemeResource SystemAccentColor}" 
-                                       Width="40" Height="{Binding ChartData1Bit[3].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
-                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                       ToolTipService.ToolTip="80%: {Binding ChartData1Bit[3].DetectionRate}%"/>
-                            
-                            <!-- Столбец 100% -->
-                            <Rectangle Grid.Column="4" Fill="{ThemeResource SystemAccentColor}" 
-                                       Width="40" Height="{Binding ChartData1Bit[4].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
-                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                       ToolTipService.ToolTip="100%: {Binding ChartData1Bit[4].DetectionRate}%"/>
+                            <Rectangle Grid.Column="0" Fill="{ThemeResource SystemAccentColor}" Width="40" 
+                                       Height="{Binding ChartData1Bit[0].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="1" Fill="{ThemeResource SystemAccentColor}" Width="40" 
+                                       Height="{Binding ChartData1Bit[1].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="2" Fill="{ThemeResource SystemAccentColor}" Width="40" 
+                                       Height="{Binding ChartData1Bit[2].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="3" Fill="{ThemeResource SystemAccentColor}" Width="40" 
+                                       Height="{Binding ChartData1Bit[3].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                            <Rectangle Grid.Column="4" Fill="{ThemeResource SystemAccentColor}" Width="40" 
+                                       Height="{Binding ChartData1Bit[4].DetectionRate, Converter={StaticResource PercentToHeightConverter}}"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
                         </Grid>
                     </Border>
                 </Grid>
-                
                 <!-- Ось X -->
                 <Grid Margin="55,5,0,0">
                     <Grid.ColumnDefinitions>

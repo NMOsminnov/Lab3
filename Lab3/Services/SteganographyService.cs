@@ -98,8 +98,16 @@ public class SteganographyService : ISteganographyService
             //  Markers
             var startMarker = System.Text.Encoding.UTF8.GetBytes(START_MARKER);
             var endMarker = System.Text.Encoding.UTF8.GetBytes(END_MARKER);
-            var fullData = startMarker.Concat(dataBytes).Concat(endMarker).ToArray();
-            _log.LogDebug($"[Embed] Markers: START={startMarker.Length}B, END={endMarker.Length}B, total={fullData.Length}B");
+            var lengthBytes = BitConverter.GetBytes(dataBytes.Length); // 4 байта длины
+
+            var fullData = startMarker
+                .Concat(lengthBytes)
+                .Concat(dataBytes)
+                .Concat(endMarker)
+                .ToArray();
+
+            _log.LogDebug($"[Embed] Structure: START(15) + LEN(4) + DATA({dataBytes.Length}) + END(13) = {fullData.Length}B");
+
             LogBytesPreview("[Embed] With markers (start)", fullData.Take(30).ToArray(), 30);
 
             //  Capacity check
@@ -151,12 +159,12 @@ public class SteganographyService : ISteganographyService
 
         try
         {
-
             if (settings.UseZipCompression)
             {
-                _log.LogWarning("[Embed] ZIP disabled for LSB steganography (format incompatible)");
-                settings.UseZipCompression = false; // Принудительно отключаем
+                _log.LogWarning("[Extract] ZIP disabled for LSB steganography (format incompatible)");
+                settings.UseZipCompression = false;
             }
+
             var file = await StorageFile.GetFileFromPathAsync(imagePath);
             using var stream = await file.OpenAsync(FileAccessMode.Read);
             var decoder = await BitmapDecoder.CreateAsync(stream);
@@ -171,7 +179,6 @@ public class SteganographyService : ISteganographyService
 
             var extractedBytes = ExtractBits(pixels, width, height, bitsPerPixel, settings);
             _log.LogDebug($"[Extract] Extracted {extractedBytes.Length} bytes from LSB");
-            LogBytesPreview("[Extract] Raw extracted", extractedBytes, 30);
 
             if (extractedBytes.Length == 0)
             {
@@ -179,69 +186,40 @@ public class SteganographyService : ISteganographyService
                 return CryptoResult.Error("Не удалось извлечь данные");
             }
 
-            //  Find markers
-            var markerStart = System.Text.Encoding.UTF8.GetBytes(START_MARKER);
-            var markerEnd = System.Text.Encoding.UTF8.GetBytes(END_MARKER);
-
-            int startIdx = FindBytes(extractedBytes, markerStart);
-            _log.LogDebug($"[Extract] Searching for START marker ({START_MARKER.Length} bytes)... found at index {startIdx}");
-
-            if (startIdx < 0)
-            {
-                _log.LogError("[Extract] START marker not found");
-                LogBytesPreview("[Extract] First 50 extracted bytes", extractedBytes.Take(50).ToArray(), 50);
-                return CryptoResult.Error("Маркер начала не найден. Проверьте настройки бит и режим.");
-            }
-
-            int endIdx = FindBytes(extractedBytes, markerEnd, startIdx + markerStart.Length);
-            _log.LogDebug($"[Extract] Searching for END marker... found at index {endIdx}");
-
-            if (endIdx < 0)
-            {
-                _log.LogError("[Extract] END marker not found");
-                return CryptoResult.Error("Маркер конца не найден.");
-            }
-
-            //  Extract payload
+            // 🔹 1. Ищем START-маркер
             var startMarker = System.Text.Encoding.UTF8.GetBytes(START_MARKER);
-            var endMarker = System.Text.Encoding.UTF8.GetBytes(END_MARKER);
-
-            
-            _log.LogDebug($"[Extract] START marker ({START_MARKER.Length}B) at index {startIdx}");
+            int startIdx = FindBytes(extractedBytes, startMarker);
 
             if (startIdx < 0)
             {
                 _log.LogError("[Extract] START marker not found");
                 return CryptoResult.Error("Маркер начала не найден");
             }
+            _log.LogDebug($"[Extract] START marker found at index {startIdx}");
 
-            //  Ищем END начиная с конца START-маркера
-            endIdx = FindBytes(extractedBytes, endMarker, startIdx + startMarker.Length);
-            _log.LogDebug($"[Extract] END marker ({END_MARKER.Length}B) at index {endIdx}");
+            // 🔹 2. Читаем длину данных (4 байта сразу после маркера)
+            int lengthIdx = startIdx + startMarker.Length;
+            if (lengthIdx + 4 > extractedBytes.Length)
+                return CryptoResult.Error("Недостаточно данных для чтения длины");
 
-            if (endIdx < 0)
-            {
-                _log.LogError("[Extract] END marker not found");
-                return CryptoResult.Error("Маркер конца не найден");
-            }
+            int dataLength = BitConverter.ToInt32(extractedBytes, lengthIdx);
+            _log.LogDebug($"[Extract] Declared data length: {dataLength} bytes");
 
-            //  Извлекаем данные МЕЖДУ маркерами
-            int payloadStart = startIdx + startMarker.Length;
-            int payloadLength = endIdx - payloadStart;
+            if (dataLength <= 0 || dataLength > extractedBytes.Length / 2)
+                return CryptoResult.Error($"Некорректная длина данных: {dataLength}");
 
-            _log.LogDebug($"[Extract] Payload: start={payloadStart}, length={payloadLength}");
+            // 🔹 3. Извлекаем ровно dataLength байт полезной нагрузки
+            int payloadStart = lengthIdx + 4;
+            int payloadEnd = payloadStart + dataLength;
 
-            if (payloadLength <= 0)
-            {
-                _log.LogError($"[Extract] Invalid payload length: {payloadLength}");
-                return CryptoResult.Error("Повреждённые данные: пустой полезный блок");
-            }
+            if (payloadEnd > extractedBytes.Length)
+                return CryptoResult.Error($"Данные обрезаны: нужно {payloadEnd}, есть {extractedBytes.Length}");
 
-            var dataBytes = new byte[payloadLength];
-            Array.Copy(extractedBytes, payloadStart, dataBytes, 0, payloadLength);
+            var dataBytes = new byte[dataLength];
+            Array.Copy(extractedBytes, payloadStart, dataBytes, 0, dataLength);
             LogBytesPreview("[Extract] Payload", dataBytes, 20);
 
-            //  Hamming decode
+            // 🔹 4. Декодирование Хэмминга
             if (settings.UseHammingCode)
             {
                 _log.LogInfo("[Extract] Decoding Hamming");
@@ -250,28 +228,7 @@ public class SteganographyService : ISteganographyService
                 _log.LogDebug($"[Extract] After Hamming: {before} → {dataBytes.Length} bytes");
             }
 
-            //  ZIP decompress
-            if (settings.UseZipCompression)
-            {
-                _log.LogInfo("[Extract] Decompressing ZIP");
-                try
-                {
-                    int before = dataBytes.Length;
-                    dataBytes = CompressionService.Decompress(dataBytes);
-                    _log.LogDebug($"[Extract] After ZIP: {before} → {dataBytes.Length} bytes");
-                }
-                catch (InvalidDataException ex)
-                {
-                    _log.LogWarning($"[Extract] ZIP: not compressed or corrupted: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    _log.LogError($"[Extract] ZIP error: {ex.Message}");
-                    return CryptoResult.Error($"ZIP: {ex.Message}");
-                }
-            }
-
-            //  Hill decrypt
+            // 🔹 5. Расшифровка Хилла
             if (settings.UseHillCipher && settings.HillKeyMatrix != null)
             {
                 _log.LogInfo("[Extract] Decrypting Hill cipher");

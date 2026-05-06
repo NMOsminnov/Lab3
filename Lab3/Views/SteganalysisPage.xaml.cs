@@ -8,10 +8,7 @@ public sealed partial class SteganalysisPage : Page
 {
     public SteganalysisViewModel ViewModel { get; private set; }
 
-    public SteganalysisPage()
-    {
-        InitializeComponent();
-    }
+    public SteganalysisPage() => InitializeComponent();
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {

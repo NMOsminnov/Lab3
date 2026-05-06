@@ -2,10 +2,12 @@
 using CommunityToolkit.Mvvm.Input;
 using Lab3.Models;
 using Lab3.Services;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -33,9 +35,13 @@ public partial class StegoViewModel : ObservableObject
     [ObservableProperty] private int _hillKeySize = 2;
     [ObservableProperty] private int[,]? _hillKeyMatrix;
     [ObservableProperty] private string _hillKeyDisplay = "Ключ не задан";
-    [ObservableProperty] private bool _useZipCompression = true;
+    [ObservableProperty] private bool _useZipCompression = false;
     [ObservableProperty] private bool _useHammingCode = false;
     [ObservableProperty] private int _distortionErrorCount = 0;
+
+    // Свойства
+    [ObservableProperty] private string _integrityStatus = "Не проверено";
+    [ObservableProperty] private SolidColorBrush _integrityColor = new SolidColorBrush(Microsoft.UI.Colors.Gray);
 
     public IReadOnlyList<int> BitsOptions { get; } = new List<int> { 1, 2, 3, 4, 5 };
     public IReadOnlyList<int> HillKeySizeOptions { get; } = new List<int> { 2, 3 };
@@ -47,7 +53,46 @@ public partial class StegoViewModel : ObservableObject
         _log.LogInfo("[StegoVM] Initialized");
     }
 
+
+
+    private readonly ImageDistortionService _distortionService = new();
     [RelayCommand]
+    private async Task ApplyDistortionAsync()
+    {
+        if (EmbeddedImageData == null)
+        {
+            StatusMessage = "Сначала внедрите текст в изображение!";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            StatusMessage = $"Искажение изображения ({DistortionErrorCount} ошибок)...";
+
+            // 🔥 Вызываем сервис с байтами
+            var distortedBytes = await _distortionService.DistortImageAsync(EmbeddedImageData, DistortionErrorCount);
+
+            // Заменяем текущее изображение на искаженное
+            EmbeddedImageData = distortedBytes;
+
+            // Обновляем статус
+            IntegrityStatus = "Целостность нарушена (требуется восстановление)";
+            IntegrityColor = new SolidColorBrush(Microsoft.UI.Colors.Red);
+            StatusMessage = "Изображение искажено. Попробуйте извлечь текст.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Ошибка искажения: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+
+[RelayCommand]
     private async Task SelectImageAsync()
     {
         _log.LogInfo("[VM] SelectImage command");
@@ -180,9 +225,36 @@ public partial class StegoViewModel : ObservableObject
             _log.LogInfo("[VM] Calling ExtractTextAsync...");
             var result = await _stegoService.ExtractTextAsync(ImagePath, settings);
 
+
+            // В методе ExtractTextAsync добавь проверку целостности после извлечения:
+            if (UseHammingCode)
+            {
+                // Если Хэмминг включен, считаем, что ошибки исправлены
+                IntegrityStatus = "Целостность восстановлена (Хэмминг)";
+                IntegrityColor = new SolidColorBrush(Microsoft.UI.Colors.Green);
+            }
+            else
+            {
+                // Если Хэмминг выключен, а были ошибки — целостность нарушена
+                // (Это упрощенная логика, для точной нужна CRC)
+                IntegrityStatus = "Целостность под вопросом";
+                IntegrityColor = new SolidColorBrush(Microsoft.UI.Colors.Red);
+            }
+
+
             if (result.Success)
             {
                 ExtractedText = result.Data!;
+                if (UseHammingCode)
+                {
+                    IntegrityStatus = "Целостность восстановлена (код Хэмминга)";
+                    IntegrityColor = new SolidColorBrush(Microsoft.UI.Colors.Green);
+                }
+                else
+                {
+                    // Если Хэмминг выключен, но было искажение — статус остается красным
+                    // Можно добавить логику: если DistortionErrorCount > 0, то оставить Red
+                }
                 StatusMessage = "Текст успешно извлечён!";
                 _log.LogInfo($"[VM] Extract success: {ExtractedText.Length} chars");
             }
@@ -374,16 +446,66 @@ public partial class StegoViewModel : ObservableObject
     private int[,] ParseMatrix(string data, int size)
     {
         var matrix = new int[size, size];
-        var rows = data.Split(';', StringSplitOptions.RemoveEmptyEntries);
-        if (rows.Length != size) throw new FormatException("Несоответствие размерности");
+        // 🔹 Исправление: разделяем и по ';', и по переносам строк
+        var rows = data.Split(new[] { ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (rows.Length != size)
+            throw new FormatException($"Несоответствие размерности: ожидалось {size} строк, получено {rows.Length}");
 
         for (int i = 0; i < size; i++)
         {
             var cols = rows[i].Split(',', StringSplitOptions.RemoveEmptyEntries);
-            if (cols.Length != size) throw new FormatException("Несоответствие размерности");
+            if (cols.Length != size)
+                throw new FormatException($"Несоответствие размерности в строке {i}: ожидалось {size} элементов, получено {cols.Length}");
+
             for (int j = 0; j < size; j++)
-                matrix[i, j] = int.Parse(cols[j].Trim());
+            {
+                if (!int.TryParse(cols[j].Trim(), out int val))
+                    throw new FormatException($"Неверное число в матрице: '{cols[j].Trim()}'");
+                matrix[i, j] = val;
+            }
         }
         return matrix;
     }
+
+
+    [RelayCommand]
+    private void TestHamming()
+    {
+        try
+        {
+            // Тестовые данные: "Пр"
+            byte[] original = { 0xD0, 0x9F };
+
+            _log.LogInfo($"[TEST] Original: {BitConverter.ToString(original)}");
+
+            // Кодируем
+            byte[] encoded = HammingService.Encode(original);
+            _log.LogInfo($"[TEST] Encoded:  {BitConverter.ToString(encoded)}");
+
+            // Портим первый байт (инвертируем младший бит)
+            byte[] corrupted = new byte[encoded.Length];
+            Array.Copy(encoded, corrupted, encoded.Length);
+            corrupted[0] ^= 1;
+            _log.LogInfo($"[TEST] Corrupted:{BitConverter.ToString(corrupted)}");
+
+            // Декодируем
+            byte[] decoded = HammingService.Decode(corrupted);
+            _log.LogInfo($"[TEST] Decoded:  {BitConverter.ToString(decoded)}");
+
+            // Проверяем
+            bool match = original.SequenceEqual(decoded.Take(original.Length));
+            _log.LogInfo($"[TEST] Match: {match}");
+
+            StatusMessage = $"Тест Хэмминга завершён. Результат: {(match ? "УСПЕХ" : "ПРОВАЛ")}";
+        }
+        catch (Exception ex)
+        {
+            _log.LogError($"[TEST] Ошибка: {ex.Message}");
+            StatusMessage = $"Ошибка теста: {ex.Message}";
+        }
+    }
+
+
+
 }

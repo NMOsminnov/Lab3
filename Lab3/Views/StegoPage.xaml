@@ -64,6 +64,24 @@
     </StackPanel>
 </Expander>
 
+<Expander Header="Лабораторная 5: Целостность и Хэмминг" IsExpanded="False">
+    <StackPanel Spacing="10" Margin="0,10,0,0">
+        <CheckBox Content="Использовать код Хэмминга (7,4)" 
+                  IsChecked="{x:Bind ViewModel.UseHammingCode, Mode=TwoWay}"/>
+        
+        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+            <Button Content="Исказить изображение" Command="{x:Bind ViewModel.ApplyDistortionCommand}" Width="150"/>
+            <NumberBox Header="Кол-во ошибок:" 
+                       Value="{x:Bind ViewModel.DistortionErrorCount, Mode=TwoWay}" 
+                       Minimum="0" Maximum="10000" Width="120"/>
+        </StackPanel>
+        
+        <TextBlock Text="Статус целостности:" FontWeight="SemiBold"/>
+        <TextBlock Text="{x:Bind ViewModel.IntegrityStatus, Mode=OneWay}" 
+                   Foreground="{x:Bind ViewModel.IntegrityColor, Mode=OneWay}"/>
+    </StackPanel>
+</Expander>
+
             <!-- Ввод текста -->
             <StackPanel Spacing="5">
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -92,6 +110,8 @@
                 <Button Content="Сохранить текст" Command="{x:Bind ViewModel.SaveExtractedTextCommand}" 
                         HorizontalAlignment="Right" />
             </StackPanel>
+
+            <Button Content="🧪 Тест Хэмминга" Command="{x:Bind ViewModel.TestHammingCommand}" />
 
             <!-- Статус -->
             <InfoBar Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" 
