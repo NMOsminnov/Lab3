@@ -8,11 +8,11 @@ namespace Lab3.Views;
 
 public sealed partial class RsaPage : Page
 {
-    public RsaViewModel ViewModel { get; private set; }  // ✅ Должно быть public
+    public RsaViewModel ViewModel { get; private set; }  
 
     public RsaPage()
     {
-        InitializeComponent();  // ✅ Теперь сработает после исправления XAML
+        InitializeComponent(); 
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

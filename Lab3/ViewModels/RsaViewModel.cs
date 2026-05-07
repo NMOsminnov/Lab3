@@ -97,18 +97,24 @@ public partial class RsaViewModel : ObservableObject
         try
         {
             byte[] dataBytes = Encoding.UTF8.GetBytes(InputText);
-            var result = await _rsaService.EncryptAsync(dataBytes, _currentKeys);
+
+            // 🔹 Подпись всегда включена: используем тот же ключ для подписи (приватный)
+            var result = await _rsaService.EncryptAsync(
+                dataBytes,
+                _currentKeys,  // публичный для шифрования
+                _currentKeys.D != 0 ? _currentKeys : null  // приватный для подписи
+            );
 
             if (result.Success && result.BinaryData != null)
             {
                 _encryptedBinaryData = result.BinaryData;
                 var blocks = DeserializeBigIntegers(result.BinaryData);
                 EncryptedText = string.Join(" ", blocks.Select(x => x.ToString()));
-                StatusMessage = "Шифрование выполнено";
+                StatusMessage = "✅ Шифрование + подпись выполнены";
             }
             else
             {
-                StatusMessage = $"Ошибка: {result.ErrorMessage}";
+                StatusMessage = $"❌ Ошибка: {result.ErrorMessage}";
             }
         }
         finally
@@ -116,6 +122,7 @@ public partial class RsaViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
 
     [RelayCommand]
     private async Task DecryptAsync()
@@ -135,16 +142,21 @@ public partial class RsaViewModel : ObservableObject
                 .ToList();
             byte[] cipherBytes = SerializeBigIntegers(blocks);
 
-            var result = await _rsaService.DecryptAsync(cipherBytes, _currentKeys);
+            // 🔹 Проверка подписи всегда включена: используем тот же ключ для проверки (публичный)
+            var result = await _rsaService.DecryptAsync(
+                cipherBytes,
+                _currentKeys,  // приватный для расшифровки
+                _currentKeys.E != 0 ? _currentKeys : null  // публичный для проверки
+            );
 
             if (result.Success && result.BinaryData != null)
             {
                 DecryptedText = Encoding.UTF8.GetString(result.BinaryData);
-                StatusMessage = "Расшифровка выполнена";
+                StatusMessage = result.Data!;  // "Расшифровано и проверено" или ошибка подписи
             }
             else
             {
-                StatusMessage = $"Ошибка: {result.ErrorMessage}";
+                StatusMessage = $"❌ Ошибка: {result.ErrorMessage}";
             }
         }
         finally
@@ -152,6 +164,8 @@ public partial class RsaViewModel : ObservableObject
             IsBusy = false;
         }
     }
+
+
 
     [RelayCommand]
     private async Task LoadTextFileAsync()
